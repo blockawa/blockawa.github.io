@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>后台管理 · Cat shopping</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    :root{ --md-sys-color-primary:#0B6EEC; --md-sys-color-surface:hsla(200,80%,98%,.75); --md-sys-color-on-surface:#00344D; --blur:20px; }
+    body{background:linear-gradient(135deg,#A7D7FF 0%,#E4F5FF 100%);margin:0;font-family:'Google Sans',sans-serif}
+    .admin-wrapper{max-width:960px;margin:40px auto;padding:0 16px}
+    .glass{background:rgba(255,255,255,.55);backdrop-filter:blur(var(--blur));border-radius:16px;padding:20px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px 12px;text-align:left}
+    th{color:var(--md-sys-color-primary)}
+    .btn{background:var(--md-sys-color-primary);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+    .btn.danger{background:#E53935}
+    .btn.small{padding:4px 8px}
+    .pagination{display:flex;gap:6px;margin-top:12px;justify-content:center}
+    .pagination .btn{background:rgba(255,255,255,.6);color:var(--md-sys-color-primary)}
+    .pagination .btn.active{background:var(--md-sys-color-primary);color:#fff}
+    .search-bar{display:flex;gap:8px;margin-bottom:12px}
+    .search-bar input{flex:1;padding:6px 12px;border:none;border-radius:50px;background:rgba(255,255,255,.6);outline:none}
+    .form-row{margin-bottom:12px}
+    .form-row label{display:block;margin-bottom:4px;font-size:14px;color:var(--md-sys-color-on-surface)}
+    .form-row input,.form-row select,.form-row textarea{width:100%;padding:6px 10px;border:none;border-radius:8px;background:rgba(255,255,255,.6);font-family:inherit}
+    .form-row textarea{min-height:120px;resize:vertical}
+    .preview{background:#fff;border-radius:8px;padding:8px 12px;font-size:14px;margin-top:8px}
+    .login-box{max-width:320px;margin:120px auto 0;padding:40px 24px}
+    .login-box input{width:100%;margin-bottom:12px}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 登录页 -->
+    <div v-if="!logined" class="glass login-box">
+      <h2 style="text-align:center;margin-bottom:16px">后台登录</h2>
+      <input type="password" placeholder="请输入密码" v-model="password" @keyup.enter="login" />
+      <button class="btn" @click="login" style="width:100%">登 录</button>
+    </div>
+
+    <!-- 管理页 -->
+    <div v-else>
+      <header class="glass" style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+        <h2>Cat shopping 后台</h2>
+        <div>
+          <button class="btn" @click="page='list'">列表</button>
+          <button class="btn" @click="openNew">新增文章</button>
+          <button class="btn" @click="exportJSON">导出</button>
+          <input type="file" accept=".json" style="display:none" ref="fileInput" @change="importJSON">
+          <button class="btn" @click="$refs.fileInput.click()">导入</button>
+          <button class="btn danger" @click="logout">退出</button>
+        </div>
+      </header>
+
+      <!-- 列表 -->
+      <div v-if="page==='list'" class="admin-wrapper">
+        <div class="glass">
+          <div class="search-bar">
+            <input placeholder="搜索标题或标签" v-model="keyword" />
+            <select v-model="filterCat">
+              <option value="all">全部分类</option>
+              <option v-for="c in categories" :key="c" :value="c">{{c}}</option>
+            </select>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40%">标题</th>
+                <th>分类</th>
+                <th>日期</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in paginated" :key="item.id">
+                <td>{{ item.title }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.date }}</td>
+                <td>
+                  <button class="btn small" @click="edit(item)">编辑</button>
+                  <button class="btn small danger" @click="remove(item.id)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <button class="btn" @click="curPage--" :disabled="curPage<=1">上一页</button>
+            <button v-for="p in pages" class="btn" :class="{active:p===curPage}" @click="curPage=p">{{p}}</button>
+            <button class="btn" @click="curPage++" :disabled="curPage>=pages.length">下一页</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 编辑 / 新增 -->
+      <div v-if="page==='edit'" class="admin-wrapper">
+        <div class="glass">
+          <h3>{{ isNew ? '新增文章' : '编辑文章' }}</h3>
+          <div class="form-row">
+            <label>标题</label>
+            <input v-model="form.title" />
+          </div>
+          <div class="form-row">
+            <label>分类</label>
+            <input v-model="form.category" list="cats" />
+            <datalist id="cats">
+              <option v-for="c in categories" :value="c"></option>
+            </datalist>
+          </div>
+          <div class="form-row">
+            <label>正文（支持 Markdown）</label>
+            <textarea v-model="form.body" @input="renderMarkdown"></textarea>
+            <div class="preview" v-html="previewHTML"></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:16px">
+            <button class="btn" @click="save">保存</button>
+            <button class="btn" @click="page='list'">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/marked/marked.min.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
