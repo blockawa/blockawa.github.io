@@ -92,26 +92,17 @@ overlay.addEventListener('click', () => overlay.classList.remove('show'));
 window.addEventListener('scroll', () => fab.classList.toggle('show', window.scrollY > 400));
 fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-/* ========== 灵动岛实时公告 ========== */
+/* ========== 实时公告 ========== */
 async function loadNotice() {
   try {
     const res = await fetch('notice.json?t=' + Date.now());
     const data = await res.json();
-    if (!data.msg) return;
-
-    const island = document.createElement('div');
-    island.className = 'dynamic-island';
-    island.textContent = data.msg;
-    document.body.appendChild(island);
-
-    // 出现动画
-    requestAnimationFrame(() => island.classList.add('show'));
-
-    // 5 秒后自动消失
-    setTimeout(() => {
-      island.classList.remove('show');
-      setTimeout(() => island.remove(), 400);
-    }, 5000);
+    const notice = document.createElement('div');
+    notice.id = 'notice';
+    notice.textContent = data.msg;
+    document.body.appendChild(notice);
+    setTimeout(() => { notice.style.opacity = 0; }, 5000);
+    setTimeout(() => notice.remove(), 5400);
   } catch (_) {}
 }
 
