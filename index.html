@@ -2,27 +2,38 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>Mizuki Blog</title>
+  <title>Mizuki · Material 3</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <h1>Mizuki</h1>
-    <nav>
-      <a href="#">主页</a>
-      <a href="#">其他</a>
-      <input id="search" placeholder="Q搜索…">
-    </nav>
+  <header class="top-app-bar">
+    <h1 class="title-large">Mizuki</h1>
+    <div class="search">
+      <span class="material-symbols-outlined icon">search</span>
+      <input type="text" placeholder="Q搜索…" id="search">
+    </div>
   </header>
 
-  <main id="grid">
-    <!-- 卡片由 JS 填充 -->
-  </main>
+  <!-- Material 3 TabRow -->
+  <nav class="tab-row">
+    <button class="tab active" data-cat="all">全部</button>
+    <button class="tab" data-cat="Markdown">Markdown</button>
+    <button class="tab" data-cat="Video">Video</button>
+  </nav>
 
-  <!-- 图片预览层 -->
+  <main id="grid"></main>
+
+  <!-- FAB 返回顶部 -->
+  <button id="fab" class="fab">
+    <span class="material-symbols-outlined">expand_less</span>
+  </button>
+
+  <!-- Lightbox -->
   <div id="overlay">
-    <img id="overlay-img" src="" alt="">
+    <img id="overlay-img" alt="">
   </div>
 
   <script src="main.js"></script>
