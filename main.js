@@ -1,4 +1,4 @@
-/* 文章数据（新增 category 字段） */
+/* ========== 示例文章数据 ========== */
 const posts = [
   {
     title: "Markdown Tutorial",
@@ -26,35 +26,17 @@ const posts = [
     words: 62,
     mins: 1,
     img: "img/3.jpg"
-  },
-  {
-    title: "Material 3 Migration Guide",
-    date: "2024-06-11",
-    tags: ["Material", "Guide"],
-    category: "Markdown",
-    words: 1200,
-    mins: 6,
-    img: "img/4.jpg"
-  },
-  {
-    title: "Live Coding Session",
-    date: "2023-12-25",
-    tags: ["Video", "Live"],
-    category: "Video",
-    words: 0,
-    mins: 120,
-    img: "img/5.jpg"
   }
 ];
 
-/* 渲染 */
+/* ========== 渲染网格 ========== */
 const grid = document.getElementById('grid');
 const tabs = [...document.querySelectorAll('.tab')];
 let activeCat = 'all';
 
 function render(cat = 'all') {
   grid.innerHTML = '';
-  const filtered = cat === 'all' ? posts : posts.filter(p => p.category === cat);
+  const filtered = (cat === 'all') ? posts : posts.filter(p => p.category === cat);
   filtered.forEach(p => {
     const card = document.createElement('div');
     card.className = 'card';
@@ -71,7 +53,7 @@ function render(cat = 'all') {
   });
 }
 
-/* 分类切换 */
+/* ========== 分类 TabRow ========== */
 tabs.forEach(tab =>
   tab.addEventListener('click', () => {
     tabs.forEach(t => t.classList.remove('active'));
@@ -81,17 +63,19 @@ tabs.forEach(tab =>
   })
 );
 
-/* 搜索（标题 & 标签） */
+/* ========== 搜索（标题+标签） ========== */
 document.getElementById('search').addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
   [...grid.children].forEach(card => {
     const title = card.querySelector('.card-title').textContent.toLowerCase();
-    const tagText = [...card.querySelectorAll('.card-tags span')].map(s => s.textContent.toLowerCase()).join(' ');
+    const tagText = [...card.querySelectorAll('.card-tags span')]
+      .map(s => s.textContent.toLowerCase())
+      .join(' ');
     card.style.display = (title.includes(q) || tagText.includes(q)) ? '' : 'none';
   });
 });
 
-/* Lightbox */
+/* ========== Lightbox ========== */
 const overlay = document.getElementById('overlay');
 const overlayImg = document.getElementById('overlay-img');
 function openLightbox(src) {
@@ -100,12 +84,41 @@ function openLightbox(src) {
 }
 overlay.addEventListener('click', () => overlay.classList.remove('show'));
 
-/* FAB 返回顶部 */
+/* ========== 返回顶部 FAB ========== */
 const fab = document.getElementById('fab');
-window.addEventListener('scroll', () => {
-  fab.classList.toggle('show', window.scrollY > 400);
-});
+window.addEventListener('scroll', () => fab.classList.toggle('show', window.scrollY > 400));
 fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-/* 初始渲染 */
+/* ========== 实时公告 ========== */
+async function loadNotice() {
+  try {
+    const res = await fetch('notice.json?t=' + Date.now());
+    const data = await res.json();
+    const notice = document.createElement('div');
+    notice.id = 'notice';
+    notice.textContent = data.msg;
+    document.body.appendChild(notice);
+    setTimeout(() => notice.style.opacity = 0, 5000);
+    setTimeout(() => notice.remove(), 5400);
+  } catch (_) {}
+}
+
+/* ========== Material 3 加载完成 ========== */
+window.addEventListener('load', () => {
+  const loader = document.getElementById('loader');
+  loader.classList.add('hide');
+  setTimeout(() => loader.remove(), 500);
+  loadNotice();
+});
+
+/* ========== 路由平滑过渡 ========== */
+document.addEventListener('click', e => {
+  const link = e.target.closest('a[href]:not([href^="#"])');
+  if (!link) return;
+  e.preventDefault();
+  document.body.classList.add('fade-out');
+  setTimeout(() => (location.href = link.href), 300);
+});
+
+/* ========== 首次渲染 ========== */
 render();

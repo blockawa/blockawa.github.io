@@ -1,41 +1,234 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>Mizuki · Material 3</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Cat · shopping</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+  <style>
+    :root{
+      /* 天蓝色 Material 3 */
+      --md-sys-color-primary:#0B6EEC;
+      --md-sys-color-surface:hsla(200,80%,98%,.75);
+      --md-sys-color-on-surface:#00344D;
+      --blur:20px;
+      font-family:'Google Sans',-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100vh}
+    body{
+      background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><circle cx="400" cy="400" r="600" fill="%230B6EEC" opacity=".2"/></svg>') no-repeat 50%/cover fixed,
+                 linear-gradient(135deg,#A7D7FF 0%,#E4F5FF 100%);
+      transition:opacity .3s ease;
+    }
+    body.fade-out{opacity:0}
+
+    /* 加载动画 */
+    .m3-loader{
+      position:fixed;inset:0;background:hsla(200,80%,98%,.9);backdrop-filter:blur(var(--blur));display:flex;align-items:center;justify-content:center;z-index:9999;
+    }
+    .m3-loader.hide{opacity:0;pointer-events:none}
+    .m3-loader svg{width:48px;height:48px;animation:m3-spin 1.2s linear infinite}
+    .m3-loader circle{fill:none;stroke:var(--md-sys-color-primary);stroke-width:3;stroke-dasharray:88;stroke-dashoffset:22}
+    @keyframes m3-spin{to{transform:rotate(360deg)}}
+
+    /* 磨砂顶栏 */
+    header{position:sticky;top:0;z-index:9;backdrop-filter:blur(var(--blur));background:var(--md-sys-color-surface);border-bottom:1px solid rgba(255,255,255,.3);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    header h1{font-size:22px;font-weight:700;color:var(--md-sys-color-primary)}
+    .search{position:relative;width:200px}
+    .search input{width:100%;padding:6px 12px 6px 36px;border:none;border-radius:50px;background:rgba(255,255,255,.6);outline:none}
+    .search .material-symbols-outlined{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--md-sys-color-primary)}
+
+    /* TabRow */
+    .tab-row{display:flex;border-bottom:1px solid rgba(255,255,255,.3);background:var(--md-sys-color-surface)}
+    .tab{flex:1;padding:12px 0;border:none;background:none;font-size:14px;color:var(--md-sys-color-on-surface);cursor:pointer;position:relative}
+    .tab.active{color:var(--md-sys-color-primary)}
+    .tab.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60%;height:3px;background:var(--md-sys-color-primary);border-radius:3px 3px 0 0}
+
+    /* 磨砂卡片 */
+    #grid{padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+    .card{border-radius:16px;overflow:hidden;background:rgba(255,255,255,.6);backdrop-filter:blur(var(--blur));box-shadow:0 4px 12px rgba(0,0,0,.08);transition:transform .2s}
+    .card:hover{transform:translateY(-2px)}
+    .card img{width:100%;height:180px;object-fit:cover}
+    .card-body{padding:12px 16px 16px}
+    .card-title{font-weight:600;font-size:16px;margin-bottom:4px;color:var(--md-sys-color-on-surface)}
+    .card-meta{font-size:12px;color:var(--md-sys-color-primary);margin-bottom:8px}
+    .card-tags{display:flex;flex-wrap:wrap;gap:4px}
+    .card-tags span{font-size:11px;padding:3px 8px;background:var(--md-sys-color-primary);color:#fff;border-radius:12px}
+
+    /* 实时公告 */
+    #notice{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99;background:rgba(255,255,255,.8);backdrop-filter:blur(var(--blur));border-radius:50px;padding:8px 18px;font-size:14px;color:var(--md-sys-color-primary);box-shadow:0 2px 8px rgba(0,0,0,.1);animation:fadeIn .4s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+    /* Lightbox */
+    #overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:999}
+    #overlay.show{display:flex}
+    #overlay img{max-width:90%;max-height:90%;border-radius:16px}
+
+    /* FAB */
+    .fab{position:fixed;right:16px;bottom:24px;width:56px;height:56px;border:none;border-radius:16px;background:var(--md-sys-color-primary);color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);display:none;align-items:center;justify-content:center}
+    .fab.show{display:flex}
+  </style>
 </head>
 <body>
-  <header class="top-app-bar">
-    <h1 class="title-large">Mizuki</h1>
+  <!-- Material 3 加载动画 -->
+  <div id="loader" class="m3-loader">
+    <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14"/></svg>
+  </div>
+
+  <!-- 顶部 -->
+  <header>
+    <h1>Cat shopping</h1>
     <div class="search">
-      <span class="material-symbols-outlined icon">search</span>
-      <input type="text" placeholder="Q搜索…" id="search">
+      <span class="material-symbols-outlined">search</span>
+      <input id="search" type="text" placeholder="Q搜索…" />
     </div>
   </header>
 
-  <!-- Material 3 TabRow -->
+  <!-- 分类 TabRow -->
   <nav class="tab-row">
     <button class="tab active" data-cat="all">全部</button>
     <button class="tab" data-cat="Markdown">Markdown</button>
     <button class="tab" data-cat="Video">Video</button>
   </nav>
 
+  <!-- 卡片网格 -->
   <main id="grid"></main>
 
-  <!-- FAB 返回顶部 -->
+  <!-- 返回顶部 FAB -->
   <button id="fab" class="fab">
     <span class="material-symbols-outlined">expand_less</span>
   </button>
 
   <!-- Lightbox -->
   <div id="overlay">
-    <img id="overlay-img" alt="">
+    <img id="overlay-img" alt="" />
   </div>
 
-  <script src="main.js"></script>
+  <script>
+    /* ========== 文章数据（示例） ========== */
+    const posts = [
+      {
+        title: "Markdown Tutorial",
+        date: "2025-01-20",
+        tags: ["Markdown", "Blogging"],
+        category: "Markdown",
+        words: 1700,
+        mins: 9,
+        img: "img/1.jpg"
+      },
+      {
+        title: "Markdown Mermaid",
+        date: "2023-10-01",
+        tags: ["Markdown", "Blogging", "Mermaid"],
+        category: "Markdown",
+        words: 578,
+        mins: 3,
+        img: "img/2.jpg"
+      },
+      {
+        title: "Include Video in the Posts",
+        date: "2022-08-01",
+        tags: ["Example", "Video"],
+        category: "Video",
+        words: 62,
+        mins: 1,
+        img: "img/3.jpg"
+      }
+    ];
+
+    /* ========== 渲染 ========== */
+    const grid = document.getElementById('grid');
+    const tabs = [...document.querySelectorAll('.tab')];
+    let activeCat = 'all';
+
+    function render(cat = 'all') {
+      grid.innerHTML = '';
+      const filtered = cat === 'all' ? posts : posts.filter(p => p.category === cat);
+      filtered.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${p.img}" alt="">
+          <div class="card-body">
+            <div class="card-title">${p.title}</div>
+            <div class="card-meta">${p.date} · ${p.words}字 · ${p.mins}分钟</div>
+            <div class="card-tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>
+          </div>
+        `;
+        card.addEventListener('click', () => openLightbox(p.img));
+        grid.appendChild(card);
+      });
+    }
+
+    /* ========== 分类切换 ========== */
+    tabs.forEach(tab =>
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeCat = tab.dataset.cat;
+        render(activeCat);
+      })
+    );
+
+    /* ========== 搜索 ========== */
+    document.getElementById('search').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      [...grid.children].forEach(card => {
+        const title = card.querySelector('.card-title').textContent.toLowerCase();
+        const tagText = [...card.querySelectorAll('.card-tags span')].map(s => s.textContent.toLowerCase()).join(' ');
+        card.style.display = title.includes(q) || tagText.includes(q) ? '' : 'none';
+      });
+    });
+
+    /* ========== Lightbox ========== */
+    const overlay = document.getElementById('overlay');
+    const overlayImg = document.getElementById('overlay-img');
+    function openLightbox(src) {
+      overlayImg.src = src;
+      overlay.classList.add('show');
+    }
+    overlay.addEventListener('click', () => overlay.classList.remove('show'));
+
+    /* ========== 返回顶部 FAB ========== */
+    const fab = document.getElementById('fab');
+    window.addEventListener('scroll', () => fab.classList.toggle('show', window.scrollY > 400));
+    fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    /* ========== 实时公告 ========== */
+    async function loadNotice() {
+      try {
+        const res = await fetch('notice.json?t=' + Date.now());
+        const data = await res.json();
+        const notice = document.createElement('div');
+        notice.id = 'notice';
+        notice.textContent = data.msg;
+        document.body.appendChild(notice);
+        setTimeout(() => { notice.style.opacity = 0; }, 5000);
+        setTimeout(() => notice.remove(), 5400);
+      } catch (_) {}
+    }
+
+    /* ========== Material 3 加载完成 ========== */
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('loader');
+      loader.classList.add('hide');
+      setTimeout(() => loader.remove(), 500);
+      loadNotice();
+    });
+
+    /* ========== 路由过渡 ========== */
+    document.addEventListener('click', e => {
+      const link = e.target.closest('a[href]:not([href^="#"])');
+      if (!link) return;
+      e.preventDefault();
+      document.body.classList.add('fade-out');
+      setTimeout(() => (location.href = link.href), 300);
+    });
+
+    /* ========== 首次渲染 ========== */
+    render();
+  </script>
 </body>
 </html>
