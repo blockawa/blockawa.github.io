@@ -5,8 +5,7 @@ const posts = [
     date: "2025-01-20",
     tags: ["Markdown", "Blogging"],
     category: "Markdown",
-    words: 1700,
-    mins: 9,
+    desc: "一篇简洁易懂的 Markdown 入门教程。",
     img: "img/1.jpg"
   },
   {
@@ -14,8 +13,7 @@ const posts = [
     date: "2023-10-01",
     tags: ["Markdown", "Blogging", "Mermaid"],
     category: "Markdown",
-    words: 578,
-    mins: 3,
+    desc: "在 Markdown 中优雅绘制 Mermaid 流程图。",
     img: "img/2.jpg"
   },
   {
@@ -23,29 +21,38 @@ const posts = [
     date: "2022-08-01",
     tags: ["Example", "Video"],
     category: "Video",
-    words: 62,
-    mins: 1,
+    desc: "演示如何在博客文章中嵌入视频。",
     img: "img/3.jpg"
   }
 ];
 
-/* ========== 渲染网格 ========== */
-const grid = document.getElementById('grid');
-const tabs = [...document.querySelectorAll('.tab')];
-let activeCat = 'all';
+/* ========== DOM 引用 ========== */
+const grid     = document.getElementById('grid');
+const tabs     = [...document.querySelectorAll('.tab')];
+const search   = document.getElementById('search');
+const overlay  = document.getElementById('overlay');
+const overlayImg = document.getElementById('overlay-img');
+const fab      = document.getElementById('fab');
 
+/* ========== 渲染网格 ========== */
 function render(cat = 'all') {
   grid.innerHTML = '';
   const filtered = (cat === 'all') ? posts : posts.filter(p => p.category === cat);
   filtered.forEach(p => {
     const card = document.createElement('div');
     card.className = 'card';
+
+    // 仅在“全部”分类下显示标签
+    const tagsHTML = (cat === 'all' && p.tags.length)
+      ? `<div class="card-tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>`
+      : '';
+
     card.innerHTML = `
       <img src="${p.img}" alt="">
       <div class="card-body">
         <div class="card-title">${p.title}</div>
-        <div class="card-meta">${p.date} · ${p.words}字 · ${p.mins}分钟</div>
-        <div class="card-tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>
+        <div class="card-meta">${p.desc}</div>
+        ${tagsHTML}
       </div>
     `;
     card.addEventListener('click', () => openLightbox(p.img));
@@ -58,13 +65,12 @@ tabs.forEach(tab =>
   tab.addEventListener('click', () => {
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    activeCat = tab.dataset.cat;
-    render(activeCat);
+    render(tab.dataset.cat);
   })
 );
 
-/* ========== 搜索（标题+标签） ========== */
-document.getElementById('search').addEventListener('input', e => {
+/* ========== 搜索（标题 + 标签） ========== */
+search.addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
   [...grid.children].forEach(card => {
     const title = card.querySelector('.card-title').textContent.toLowerCase();
@@ -76,8 +82,6 @@ document.getElementById('search').addEventListener('input', e => {
 });
 
 /* ========== Lightbox ========== */
-const overlay = document.getElementById('overlay');
-const overlayImg = document.getElementById('overlay-img');
 function openLightbox(src) {
   overlayImg.src = src;
   overlay.classList.add('show');
@@ -85,21 +89,29 @@ function openLightbox(src) {
 overlay.addEventListener('click', () => overlay.classList.remove('show'));
 
 /* ========== 返回顶部 FAB ========== */
-const fab = document.getElementById('fab');
 window.addEventListener('scroll', () => fab.classList.toggle('show', window.scrollY > 400));
 fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-/* ========== 实时公告 ========== */
+/* ========== 灵动岛实时公告 ========== */
 async function loadNotice() {
   try {
     const res = await fetch('notice.json?t=' + Date.now());
     const data = await res.json();
-    const notice = document.createElement('div');
-    notice.id = 'notice';
-    notice.textContent = data.msg;
-    document.body.appendChild(notice);
-    setTimeout(() => notice.style.opacity = 0, 5000);
-    setTimeout(() => notice.remove(), 5400);
+    if (!data.msg) return;
+
+    const island = document.createElement('div');
+    island.className = 'dynamic-island';
+    island.textContent = data.msg;
+    document.body.appendChild(island);
+
+    // 出现动画
+    requestAnimationFrame(() => island.classList.add('show'));
+
+    // 5 秒后自动消失
+    setTimeout(() => {
+      island.classList.remove('show');
+      setTimeout(() => island.remove(), 400);
+    }, 5000);
   } catch (_) {}
 }
 
